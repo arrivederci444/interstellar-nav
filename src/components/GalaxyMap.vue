@@ -75,6 +75,7 @@ let destLabelObj
 let planetLabels = []
 let planetMeshes = []
 let routeLabelObjs = []
+let galaxyLabels = []
 let currentCurve = null
 let lastPts = null
 let maxExtent = 52000
@@ -239,6 +240,26 @@ function makeGalaxyTexture() {
   return tex
 }
 
+function makeAccretionTexture() {
+  const w = 256
+  const h = 8
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d')
+  for (let x = 0; x < w; x += 1) {
+    const t = x / w
+    const r = 255
+    const g = Math.round(255 - t * 130)
+    const b = Math.round(210 - t * 200)
+    const a = Math.max(0, Math.pow(1 - t, 1.6) * (0.65 + 0.35 * Math.sin(t * 34))) * 0.95
+    ctx.fillStyle = `rgba(${r},${g},${Math.max(0, b)},${a})`
+    ctx.fillRect(x, 0, 1, h)
+  }
+  const tex = new THREE.CanvasTexture(canvas)
+  return tex
+}
+
 function buildGalaxy() {
   const group = new THREE.Group()
   const arms = 4
@@ -337,6 +358,57 @@ function buildGalaxy() {
   sprite.scale.set(12000, 12000, 1)
   group.add(sprite)
   galaxyCore = sprite
+
+  // 银心实体黑洞（人马座 A*）
+  const bhR = 2000
+  const bh = new THREE.Mesh(
+    new THREE.SphereGeometry(bhR, 32, 32),
+    new THREE.MeshBasicMaterial({ color: 0x000000 }),
+  )
+  group.add(bh)
+
+  const inner = bhR * 1.12
+  const outer = bhR * 3.6
+  const bhDiskGeo = new THREE.RingGeometry(inner, outer, 128, 1)
+  const dp = bhDiskGeo.attributes.position
+  const duv = bhDiskGeo.attributes.uv
+  const vv = new THREE.Vector3()
+  for (let i = 0; i < dp.count; i += 1) {
+    vv.fromBufferAttribute(dp, i)
+    const rr = vv.length()
+    duv.setXY(i, (rr - inner) / (outer - inner), 0.5)
+  }
+  const disk = new THREE.Mesh(
+    bhDiskGeo,
+    new THREE.MeshBasicMaterial({
+      map: makeAccretionTexture(),
+      transparent: true,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      opacity: 1,
+    }),
+  )
+  disk.rotation.x = -Math.PI / 2
+  group.add(disk)
+
+  const photon = new THREE.Mesh(
+    new THREE.RingGeometry(bhR * 1.02, bhR * 1.1, 128, 1),
+    new THREE.MeshBasicMaterial({
+      color: 0xfff2d0,
+      transparent: true,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    }),
+  )
+  photon.rotation.x = -Math.PI / 2
+  group.add(photon)
+
+  const bhLabel = makeLabel('人马座 A*', 'g-label g-blackhole')
+  bhLabel.position.set(0, 0, 0)
+  group.add(bhLabel)
+  galaxyLabels.push(bhLabel)
 
   // 真实感银河盘面贴图
   const diskGeo = new THREE.PlaneGeometry(104000, 104000)
@@ -1080,6 +1152,10 @@ function updateLOD() {
     l.visible = d < 1e5
   })
 
+  galaxyLabels.forEach((l) => {
+    l.visible = d < 3e6
+  })
+
   let level = '银河系'
   if (d < 0.08) level = '太阳系'
   else if (d < 30) level = '恒星邻域'
@@ -1399,6 +1475,12 @@ onBeforeUnmount(() => {
   color: #cfd8ff;
   font-size: 11px;
   opacity: 0.85;
+}
+
+.labels :deep(.g-blackhole) {
+  color: #ffd27a;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .labels :deep(.g-sun) {
