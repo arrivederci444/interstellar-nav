@@ -27,6 +27,7 @@ const searchMode = ref('destination')
 const navigating = ref(false)
 const navProgress = ref(0)
 const immersive = ref(false)
+const mapRotating = ref(true)
 const toast = ref('')
 let toastTimer = null
 let navTimer = null
@@ -223,14 +224,25 @@ onBeforeUnmount(() => {
     <div class="statusbar">
       <span class="time">{{ clock }}</span>
       <span class="notch" />
-      <span class="signals">
-        <button class="music-btn" :title="musicOn ? '暂停音乐' : '播放音乐'" @click="toggleMusic">
-          {{ musicOn ? '🔊' : '🔇' }}
-        </button>
-        <span class="bars"><i /><i /><i /><i /></span>
-        <span class="wifi">📶</span>
-        <span class="battery">91</span>
-      </span>
+    </div>
+
+    <div class="top-controls">
+      <button
+        class="ctrl-btn"
+        :title="musicOn ? '暂停音乐' : '播放音乐'"
+        @click="toggleMusic"
+      >
+        {{ musicOn ? '🔊' : '🔇' }}
+      </button>
+      <button
+        v-if="page === 'route' && !navigating"
+        class="ctrl-btn"
+        :class="{ off: !mapRotating }"
+        :title="mapRotating ? '停止旋转' : '恢复旋转'"
+        @click="mapRotating = !mapRotating"
+      >
+        {{ mapRotating ? '⏸' : '▶' }}
+      </button>
     </div>
 
     <audio ref="audioEl" :src="musicSrc" loop preload="auto" />
@@ -252,6 +264,7 @@ onBeforeUnmount(() => {
         :navigating="navigating"
         :nav-progress="navProgress"
         :immersive="immersive"
+        :auto-rotate="mapRotating"
         @action="handleAction"
         @locate="handleLocate"
         @preference="handlePreference"
@@ -372,6 +385,40 @@ onBeforeUnmount(() => {
 
 .music-btn:active {
   transform: scale(0.9);
+}
+
+.top-controls {
+  position: absolute;
+  top: 7px;
+  right: 10px;
+  z-index: 45;
+  display: flex;
+  gap: 7px;
+}
+
+.ctrl-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: rgba(11, 19, 56, 0.78);
+  border: 1px solid rgba(120, 160, 255, 0.32);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 17px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+
+.ctrl-btn:active {
+  transform: scale(0.9);
+}
+
+.ctrl-btn.off {
+  background: linear-gradient(135deg, #37b6ff, #1677ff);
+  border-color: transparent;
 }
 
 .bars {
