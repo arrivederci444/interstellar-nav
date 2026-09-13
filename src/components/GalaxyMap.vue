@@ -19,6 +19,7 @@ const props = defineProps({
   navigating: { type: Boolean, default: false },
   navProgress: { type: Number, default: 0 },
   immersive: { type: Boolean, default: false },
+  autoRotate: { type: Boolean, default: true },
 })
 
 const emit = defineEmits(['locate', 'action', 'preference', 'toggle-immersive', 'map-interact'])
@@ -1193,7 +1194,7 @@ function initThree() {
   controls.dampingFactor = 0.08
   controls.rotateSpeed = 0.6
   controls.zoomSpeed = 1.1
-  controls.autoRotate = true
+  controls.autoRotate = props.autoRotate
   controls.autoRotateSpeed = 0.35
   controls.minDistance = 1e-7
   controls.maxDistance = 1e10
@@ -1313,6 +1314,13 @@ watch(
       rocket.visible = true
       setRocketAt(props.navProgress)
     }
+  },
+)
+
+watch(
+  () => props.autoRotate,
+  (v) => {
+    if (controls) controls.autoRotate = v
   },
 )
 
@@ -1496,7 +1504,7 @@ onBeforeUnmount(() => {
 
 .immersive-btn {
   position: absolute;
-  top: 52px;
+  top: 92px;
   right: 12px;
   z-index: 6;
   padding: 7px 12px;
