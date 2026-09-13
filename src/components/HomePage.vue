@@ -58,6 +58,8 @@ function open(rec) {
     <div class="cover">
       <div class="brand-top">
         <span class="brand">🚀 星际航行</span>
+      </div>
+      <div class="scale-slot">
         <PlanetScale />
       </div>
 
@@ -166,6 +168,13 @@ function open(rec) {
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
+}
+
+.scale-slot {
+  position: absolute;
+  top: 92px;
+  right: 14px;
+  z-index: 9;
 }
 
 .brand {
